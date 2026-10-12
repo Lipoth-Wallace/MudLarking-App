@@ -3,6 +3,7 @@ import * as Location from 'expo-location';
 import { useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { supabase } from '@/supabase';
 import { colors } from '@/theme';
 
 const MAX_ACCURACY_M = 20;
@@ -63,12 +64,30 @@ export default function CameraScreen() {
   }
 
   async function recordFind() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      Alert.alert('Sign in first', 'Sign in on the Settings tab so your finds are saved.');
+      return;
+    }
     setBusy(true);
     try {
       const photo = await camera.current?.takePictureAsync();
       if (!photo) return;
       const fix = await getGoodFix();
       if (!fix) return;
+      // Photos live in a folder named after the user, which the storage policy checks.
+      const photoPath = `${user.id}/${fix.timestamp}.jpg`;
+      const body = await (await fetch(photo.uri)).arrayBuffer();
+      const upload = await supabase.storage.from('photos').upload(photoPath, body, { contentType: 'image/jpeg' });
+      if (upload.error) throw upload.error;
+      const insert = await supabase.from('finds').insert({
+        photo_path: photoPath,
+        latitude: fix.coords.latitude,
+        longitude: fix.coords.longitude,
+        accuracy_m: fix.coords.accuracy,
+        found_at: new Date(fix.timestamp).toISOString(),
+      });
+      if (insert.error) throw insert.error;
       setFind({
         photoUri: photo.uri,
         latitude: fix.coords.latitude,
@@ -77,7 +96,7 @@ export default function CameraScreen() {
         timestamp: fix.timestamp,
       });
     } catch (e) {
-      Alert.alert('Something went wrong', String(e));
+      Alert.alert('Find not saved', (e as { message?: string }).message ?? String(e));
     } finally {
       setBusy(false);
     }
@@ -90,6 +109,7 @@ export default function CameraScreen() {
         <Text style={styles.text}>Latitude: {find.latitude.toFixed(6)}</Text>
         <Text style={styles.text}>Longitude: {find.longitude.toFixed(6)}</Text>
         <Text style={styles.text}>Accuracy: ±{find.accuracy === null ? '?' : Math.round(find.accuracy)} m</Text>
+        <Text style={styles.text}>Saved ✓</Text>
         <Text style={styles.text}>Time: {new Date(find.timestamp).toLocaleString()}</Text>
         <Pressable style={styles.button} onPress={() => setFind(null)}>
           <Text style={styles.buttonText}>New find</Text>
