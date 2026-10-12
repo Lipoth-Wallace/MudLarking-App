@@ -33,6 +33,18 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "MudLarking uses the camera to photograph your finds."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "MudLarking records where each find was made."
+        }
       ]
     ],
     "experiments": {
