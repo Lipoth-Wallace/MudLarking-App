@@ -93,7 +93,7 @@ h1,h2,h3{text-wrap:balance;margin:0} p{text-wrap:pretty;margin:0}
   .sheet{box-shadow:none;break-after:page} [contenteditable] :hover{outline:none}
 }
 </style>
-<style id="size">:root{--w:210mm;--h:297mm;--z:1} @page{size:A4;margin:0}</style>
+<style id="size"></style>
 </head>
 <body>
 <div class="bar" role="toolbar" aria-label="Flyer tools">
@@ -2532,10 +2532,17 @@ var qrcode = function() {
 </script>
 <script>
 const SIZES = {
-  A5: ':root{--w:148mm;--h:210mm;--z:0.70711} @page{size:A5;margin:0}',
+  // A5 shrinks the page to 71%, so text is enlarged here to stay at 7pt or more in print
+  A5: ':root{--w:148mm;--h:210mm;--z:0.70711} @page{size:A5;margin:0}'
+    + ' .body{padding:24px 40px 22px} .eyebrow,.chip,.foot span,.refs,.fanlaw small{font-size:13.5px} .hero p{font-size:18px}'
+    + ' .list{gap:6px;margin-top:12px} .theme{grid-template-columns:140px 1fr;gap:12px;padding:8px 12px} .tname{font-size:13.5px;gap:8px} .hero{margin-top:14px} .ico{width:34px;height:34px}'
+    + ' .item{font-size:17px} .items{gap:6px} .band p{font-size:14.5px} .band strong{font-size:16px} .foot{font-size:16.5px}'
+    + ' .check h3{font-size:20px} .check p{font-size:16px} .helps p{font-size:16px!important} .iac p{font-size:14.5px} .iac h4{font-size:15px}'
+    + ' .result{font-size:14.5px;margin-top:12px;padding:8px 12px} .checks{margin-top:12px} .check{padding:12px 14px;gap:6px} .helps{margin-top:16px;padding-top:16px} .cta{padding:18px 22px} .qr{width:156px;height:156px} .refs{margin-top:10px} .cta p{font-size:17px} .qrwrap .url{font-size:14px}',
   A4: ':root{--w:210mm;--h:297mm;--z:1} @page{size:A4;margin:0}',
   A3: ':root{--w:297mm;--h:420mm;--z:1.41421} @page{size:A3;margin:0}'};
 const size = document.getElementById('size'), paper = document.getElementById('paper');
+if (!size.textContent) size.textContent = SIZES.A5; // A5 fits a notebook
 paper.value = Object.keys(SIZES).find(k => size.textContent.includes('size:' + k + ';')) || 'A4';
 paper.onchange = () => { size.textContent = SIZES[paper.value]; };
 
